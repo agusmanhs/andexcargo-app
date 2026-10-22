@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Share,
   Alert,
-  Clipboard,
 } from 'react-native';
 import {
   Search,
@@ -17,15 +16,13 @@ import {
   Copy,
   Share2,
   Package,
-  Calendar,
   MapPin,
   ArrowRight,
   User,
   Scale,
   Clock,
-  CheckCircle,
   Truck,
-  RotateCcw,
+  Phone,
 } from 'lucide-react-native';
 import { Colors } from '../constants/colors';
 import { ApiService, TrackingData } from '../api/client';
@@ -90,8 +87,7 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({ route }) => {
   };
 
   const handleCopyResi = (resi: string) => {
-    // React Native built-in or Alert
-    Alert.alert('Nomor Resi', `Resi: ${resi}`);
+    Alert.alert('Nomor Resi', `Nomor resi: ${resi}`);
   };
 
   const handleShare = async () => {
@@ -284,6 +280,26 @@ export const TrackScreen: React.FC<TrackScreenProps> = ({ route }) => {
                     </Text>
                   </View>
                 </View>
+
+                {result.alamat_tujuan ? (
+                  <View style={[styles.specItem, { width: '100%', marginTop: 4 }]}>
+                    <MapPin size={15} color={Colors.textSecondary} />
+                    <View style={styles.specTextCol}>
+                      <Text style={styles.specLabel}>Alamat Penerima</Text>
+                      <Text style={styles.specValue}>{result.alamat_tujuan}</Text>
+                    </View>
+                  </View>
+                ) : null}
+
+                {result.telepon_tujuan ? (
+                  <View style={[styles.specItem, { width: '100%', marginTop: 4 }]}>
+                    <Phone size={15} color={Colors.textSecondary} />
+                    <View style={styles.specTextCol}>
+                      <Text style={styles.specLabel}>Telepon Penerima</Text>
+                      <Text style={styles.specValue}>{result.telepon_tujuan}</Text>
+                    </View>
+                  </View>
+                ) : null}
               </View>
             </View>
 

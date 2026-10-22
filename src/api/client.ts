@@ -11,7 +11,8 @@ export interface TrackingTimeline {
   tanggal: string;
   status: string;
   keterangan: string;
-  lokasi: string;
+  lokasi?: string;
+  waktu?: string;
 }
 
 export interface TrackingData {
@@ -22,10 +23,12 @@ export interface TrackingData {
   penerima: string;
   asal: string;
   tujuan: string;
+  alamat_tujuan?: string;
+  telepon_tujuan?: string;
   layanan: string;
   koli: number | string;
   berat: number | string;
-  total_bayar: number;
+  total_bayar?: number;
   history: TrackingTimeline[];
 }
 
@@ -103,12 +106,69 @@ export const ApiService = {
   },
 
   async trackResi(resi: string): Promise<TrackingData> {
-    const cleanResi = encodeURIComponent(resi.trim());
-    const res = await request<{ status: boolean; data: TrackingData; message?: string }>(`/track/${cleanResi}`);
+    const cleanResi = encodeURIComponent(resi.trim().toUpperCase());
+    const res = await request<{
+      status: boolean;
+      data: any;
+      message?: string;
+    }>(`/track/${cleanResi}`);
+
     if (!res.status || !res.data) {
       throw new Error(res.message || 'Nomor resi tidak ditemukan.');
     }
-    return res.data;
+
+    const raw = res.data;
+
+    // Handle format: { info: { ... }, timeline: [ ... ] }
+    if (raw.info) {
+      const info = raw.info;
+      const rawTimeline = Array.isArray(raw.timeline) ? raw.timeline : [];
+
+      return {
+        resi: info.kode || cleanResi,
+        status: info.status_terakhir || 'PROSES',
+        tanggal: info.waktu_terakhir || '-',
+        pengirim: info.pengirim || '-',
+        penerima: info.penerima || '-',
+        asal: info.asal || '-',
+        tujuan: info.tujuan || '-',
+        alamat_tujuan: info.alamat_tujuan || '',
+        telepon_tujuan: info.telepon_tujuan || '',
+        layanan: info.layanan || 'Reguler',
+        koli: info.koli ?? 1,
+        berat: info.berat ?? 0,
+        history: rawTimeline.map((item: any) => ({
+          tanggal: item.waktu || `${item.tanggal || ''} ${item.jam || ''}`.trim() || '-',
+          status: item.status || 'INFO',
+          keterangan: item.keterangan || '',
+          lokasi: item.lokasi || '',
+        })),
+      };
+    }
+
+    // Direct format fallback
+    return {
+      resi: raw.resi || raw.kode || cleanResi,
+      status: raw.status || raw.status_terakhir || 'PROSES',
+      tanggal: raw.tanggal || raw.waktu || '-',
+      pengirim: raw.pengirim || '-',
+      penerima: raw.penerima || '-',
+      asal: raw.asal || '-',
+      tujuan: raw.tujuan || '-',
+      alamat_tujuan: raw.alamat_tujuan || '',
+      telepon_tujuan: raw.telepon_tujuan || '',
+      layanan: raw.layanan || 'Reguler',
+      koli: raw.koli ?? 1,
+      berat: raw.berat ?? 0,
+      history: Array.isArray(raw.history || raw.timeline)
+        ? (raw.history || raw.timeline).map((item: any) => ({
+            tanggal: item.tanggal || item.waktu || '-',
+            status: item.status || 'INFO',
+            keterangan: item.keterangan || '',
+            lokasi: item.lokasi || '',
+          }))
+        : [],
+    };
   },
 
   async getKabupaten(): Promise<Kabupaten[]> {
@@ -134,7 +194,13 @@ export const ApiService = {
   },
 
   async getKantor(): Promise<Kantor[]> {
-    const res = await request<{ status: boolean; data: Kantor[] }>('/kantor');
-    return res.data || [];
+    const res = await request<{ status: boolean; data: any[] }>('/kantor');
+    return (res.data || []).map((k: any) => ({
+      id: k.id,
+      nama: k.nama_kantor || k.nama || 'Cabang Andex',
+      alamat: k.alamat || '-',
+      telepon: k.telepon || k.whatsapp || '08115838080',
+      kota: k.kota || (k.nama_kantor ? k.nama_kantor.replace('Cabang ', '').replace('Kantor ', '') : ''),
+    }));
   },
 };
