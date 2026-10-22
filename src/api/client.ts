@@ -182,14 +182,8 @@ export const ApiService = {
   },
 
   async getTarif(fromKab: string | number, toKab: string | number, produkId: number): Promise<Tarif | null> {
-    const res = await request<{ status: boolean; data: Tarif | null; message?: string }>('/get-tarif', {
-      method: 'POST',
-      body: JSON.stringify({
-        from_kab: fromKab,
-        to_kab: toKab,
-        produk_id: produkId,
-      }),
-    });
+    const query = `from_kab=${encodeURIComponent(String(fromKab))}&to_kab=${encodeURIComponent(String(toKab))}&produk_id=${encodeURIComponent(String(produkId))}`;
+    const res = await request<{ status: boolean; data: Tarif | null; message?: string }>(`/get-tarif?${query}`);
     return res.data;
   },
 
