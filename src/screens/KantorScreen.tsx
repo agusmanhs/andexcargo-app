@@ -18,26 +18,52 @@ import {
   Navigation,
   Search,
   Building,
-  Clock,
-  ExternalLink,
 } from 'lucide-react-native';
 import { Colors } from '../constants/colors';
 import { Config } from '../constants/config';
 import { ApiService, Kantor } from '../api/client';
 import { Header } from '../components/Header';
 
+const DEFAULT_MAIN_KANTOR: Kantor[] = [
+  {
+    id: 2,
+    nama: 'Kantor Pusat Makassar',
+    alamat: 'Ruko Pasar Grosir Daya Modern Blok C2 No 15 Daya Makassar, Makassar 90242',
+    telepon: '08115838080',
+    kota: 'Makassar',
+  },
+  {
+    id: 19,
+    nama: 'Kantor Cabang Jakarta',
+    alamat: 'JL. DELIMA RAYA No 13A, Kel. Malaka Sari, Kec. Duren Sawit, Jakarta Timur',
+    telepon: '08115838080',
+    kota: 'Jakarta',
+  },
+  {
+    id: 20,
+    nama: 'Kantor Cabang Surabaya',
+    alamat: 'Ruko 21 Klampis Blok G No. 14, Jl. Arief Rahman Hakim, Klampis Ngasem, Sukolilo, Surabaya',
+    telepon: '08115838080',
+    kota: 'Surabaya',
+  },
+];
+
 export const KantorScreen: React.FC = () => {
-  const [kantorList, setKantorList] = useState<Kantor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [kantorList, setKantorList] = useState<Kantor[]>(DEFAULT_MAIN_KANTOR);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
 
   const fetchKantor = async () => {
     try {
       const data = await ApiService.getKantor();
-      setKantorList(data);
+      if (data && data.length > 0) {
+        setKantorList(data);
+      } else {
+        setKantorList(DEFAULT_MAIN_KANTOR);
+      }
     } catch {
-      // offline fallback
+      setKantorList(DEFAULT_MAIN_KANTOR);
     } finally {
       setLoading(false);
     }
@@ -53,10 +79,19 @@ export const KantorScreen: React.FC = () => {
     setRefreshing(false);
   };
 
+  // Strictly filter to ONLY 3 main branches: Makassar, Jakarta, Surabaya
   const filtered = useMemo(() => {
-    if (!search.trim()) return kantorList;
+    const allowed = ['makassar', 'jakarta', 'surabaya'];
+    const mainBranches = kantorList.filter(k => {
+      const text = `${k.nama || ''} ${k.kota || ''} ${k.alamat || ''}`.toLowerCase();
+      return allowed.some(city => text.includes(city));
+    });
+
+    const activeList = mainBranches.length > 0 ? mainBranches : DEFAULT_MAIN_KANTOR;
+
+    if (!search.trim()) return activeList;
     const q = search.toLowerCase();
-    return kantorList.filter(
+    return activeList.filter(
       k =>
         (k.nama && k.nama.toLowerCase().includes(q)) ||
         (k.kota && k.kota.toLowerCase().includes(q)) ||
@@ -91,7 +126,7 @@ export const KantorScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="Kantor & Cabang" subtitle="Jaringan operasional Andex Cargo" />
+      <Header title="Kantor & Cabang" subtitle="3 Kantor Utama Andex Cargo" />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -128,7 +163,7 @@ export const KantorScreen: React.FC = () => {
           <Search size={18} color={Colors.textMuted} style={{ marginRight: 8 }} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Cari cabang atau kota..."
+            placeholder="Cari cabang (Makassar, Jakarta, Surabaya)..."
             placeholderTextColor={Colors.textMuted}
             value={search}
             onChangeText={setSearch}

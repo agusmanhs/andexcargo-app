@@ -31,15 +31,20 @@ import { Config } from '../constants/config';
 import { ApiService, Kabupaten, Produk, Tarif } from '../api/client';
 import { Header } from '../components/Header';
 
+const DEFAULT_PRODUK: Produk[] = [
+  { id: 3, nama_produk: "Reguler", jenis: "DARAT" },
+  { id: 2, nama_produk: "Express", jenis: "UDARA" },
+];
+
 export const TarifScreen: React.FC = () => {
   const [kabupatenList, setKabupatenList] = useState<Kabupaten[]>([]);
-  const [produkList, setProdukList] = useState<Produk[]>([]);
+  const [produkList, setProdukList] = useState<Produk[]>(DEFAULT_PRODUK);
+  const [selectedProduk, setSelectedProduk] = useState<Produk | null>(DEFAULT_PRODUK[0]);
   const [loadingInitial, setLoadingInitial] = useState(true);
 
   // Form selections
   const [asal, setAsal] = useState<Kabupaten | null>(null);
   const [tujuan, setTujuan] = useState<Kabupaten | null>(null);
-  const [selectedProduk, setSelectedProduk] = useState<Produk | null>(null);
   const [beratInput, setBeratInput] = useState('1');
 
   // Modal selector states
