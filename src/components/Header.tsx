@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, Alert } from 'react-native';
-import { MessageCircle, Phone } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MessageCircle } from 'lucide-react-native';
 import { Colors } from '../constants/colors';
 import { Config } from '../constants/config';
 
@@ -15,6 +16,8 @@ export const Header: React.FC<HeaderProps> = ({
   subtitle,
   showContactAction = true,
 }) => {
+  const insets = useSafeAreaInsets();
+
   const handleOpenWhatsApp = async () => {
     const url = `https://wa.me/${Config.HOTLINE_WA}?text=${encodeURIComponent(
       'Halo Customer Service Andex Cargo, saya ingin bertanya tentang layanan pengiriman.'
@@ -32,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: Math.max(insets.top, 12) + 6 }]}>
       <View style={styles.leftRow}>
         <Image
           source={require('../assets/images/logo.png')}
@@ -70,7 +73,6 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.primary,
     paddingHorizontal: 16,
-    paddingTop: 12,
     paddingBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
@@ -121,7 +123,7 @@ const styles = StyleSheet.create({
   waButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#25D366', // Official WhatsApp green
+    backgroundColor: '#25D366',
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 20,
