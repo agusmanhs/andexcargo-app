@@ -176,9 +176,25 @@ export const ApiService = {
     return res.data || [];
   },
 
+  /**
+   * Hanya menampilkan 2 layanan utama: Reguler dan Express
+   */
   async getProduk(): Promise<Produk[]> {
     const res = await request<{ status: boolean; data: Produk[] }>('/get-produk');
-    return res.data || [];
+    const rawList = res.data || [];
+
+    // Filter strictly to Reguler and Express
+    const filtered = rawList.filter(p => {
+      const name = (p.nama_produk || '').trim().toLowerCase();
+      return name === 'reguler' || name === 'express';
+    });
+
+    // Sort order: Reguler first, Express second
+    return filtered.sort((a, b) => {
+      if (a.nama_produk.toLowerCase().includes('reguler')) return -1;
+      if (b.nama_produk.toLowerCase().includes('reguler')) return 1;
+      return 0;
+    });
   },
 
   async getTarif(fromKab: string | number, toKab: string | number, produkId: number): Promise<Tarif | null> {
@@ -187,14 +203,55 @@ export const ApiService = {
     return res.data;
   },
 
+  /**
+   * Hanya menampilkan 3 kantor utama: Makassar, Jakarta, Surabaya
+   */
   async getKantor(): Promise<Kantor[]> {
     const res = await request<{ status: boolean; data: any[] }>('/kantor');
-    return (res.data || []).map((k: any) => ({
-      id: k.id,
-      nama: k.nama_kantor || k.nama || 'Cabang Andex',
-      alamat: k.alamat || '-',
-      telepon: k.telepon || k.whatsapp || '08115838080',
-      kota: k.kota || (k.nama_kantor ? k.nama_kantor.replace('Cabang ', '').replace('Kantor ', '') : ''),
-    }));
+    const rawList = res.data || [];
+
+    // Filter strictly to Makassar, Jakarta, and Surabaya
+    const allowed = ['makassar', 'jakarta', 'surabaya', 'upg', 'jkt', 'sub'];
+    const filtered = rawList.filter(k => {
+      const text = `${k.nama_kantor || ''} ${k.nama || ''} ${k.kode_kantor || ''} ${k.kota || ''}`.toLowerCase();
+      return allowed.some(city => text.includes(city));
+    });
+
+    const mapped: Kantor[] = filtered.map((k: any) => {
+      const text = `${k.nama_kantor || ''} ${k.nama || ''} ${k.kode_kantor || ''} ${k.kota || ''}`.toLowerCase();
+      let nama = k.nama_kantor || k.nama || 'Cabang Andex';
+      let kota = 'Makassar';
+
+      if (text.includes('makassar') || text.includes('upg')) {
+        nama = 'Kantor Pusat Makassar';
+        kota = 'Makassar';
+      } else if (text.includes('jakarta') || text.includes('jkt')) {
+        nama = 'Kantor Cabang Jakarta';
+        kota = 'Jakarta';
+      } else if (text.includes('surabaya') || text.includes('sub')) {
+        nama = 'Kantor Cabang Surabaya';
+        kota = 'Surabaya';
+      }
+
+      return {
+        id: k.id,
+        nama,
+        alamat: k.alamat && k.alamat !== '-' ? k.alamat : 'Hubungi customer service untuk alamat titik drop.',
+        telepon: k.telepon || k.whatsapp || '08115838080',
+        kota,
+      };
+    });
+
+    // Remove duplicates if any and sort order: Makassar, Jakarta, Surabaya
+    const order = ['makassar', 'jakarta', 'surabaya'];
+    const unique = mapped.filter((item, index, self) =>
+      index === self.findIndex(t => t.kota === item.kota)
+    );
+
+    return unique.sort((a, b) => {
+      const idxA = order.indexOf(a.kota.toLowerCase());
+      const idxB = order.indexOf(b.kota.toLowerCase());
+      return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+    });
   },
 };

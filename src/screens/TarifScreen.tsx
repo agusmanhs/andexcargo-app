@@ -233,7 +233,7 @@ export const TarifScreen: React.FC = () => {
               {/* LAYANAN / PRODUK */}
               <View style={styles.fieldGroup}>
                 <Text style={styles.fieldLabel}>Pilihan Layanan</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.prodScroll}>
+                <View style={styles.prodRow}>
                   {produkList.map(prod => {
                     const isSelected = selectedProduk?.id === prod.id;
                     return (
@@ -245,6 +245,7 @@ export const TarifScreen: React.FC = () => {
                           setTarifResult(null);
                           setCalcAttempted(false);
                         }}
+                        activeOpacity={0.8}
                       >
                         <Text style={[styles.prodChipText, isSelected && styles.prodChipTextSelected]}>
                           {prod.nama_produk}
@@ -252,7 +253,7 @@ export const TarifScreen: React.FC = () => {
                       </TouchableOpacity>
                     );
                   })}
-                </ScrollView>
+                </View>
               </View>
 
               {/* BERAT (KG) */}
@@ -514,18 +515,19 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontWeight: '400',
   },
-  prodScroll: {
+  prodRow: {
     flexDirection: 'row',
     marginTop: 4,
   },
   prodChip: {
+    flex: 1,
     backgroundColor: Colors.surface,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    height: 44,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginRight: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   prodChipSelected: {
     backgroundColor: Colors.primary,
